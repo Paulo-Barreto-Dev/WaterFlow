@@ -15,7 +15,8 @@
       "expo-router",
       "expo-status-bar",
       "expo-font",
-      "expo-system-ui"
+      "expo-system-ui",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '@/components/Screen';
+import { useAuth } from '@/components/AuthProvider';
 import { SectionHeading } from '@/components/SectionHeading';
 import { TimerPreview } from '@/components/TimerPreview';
 import { UserCard } from '@/components/UserCard';
@@ -11,13 +12,32 @@ import { theme } from '@/config/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { state, signOut } = useAuth();
+  const name = state.status === 'signedIn' ? state.profile.name : '';
+
+  async function handleLogout() {
+    try {
+      await signOut();
+    } catch (error) {
+      // The session remains active if Supabase rejects the logout.
+      const message = error instanceof Error ? error.message : 'Não foi possível sair.';
+      Alert.alert('Erro ao sair', message);
+    }
+  }
 
   return (
     <Screen>
       <View style={styles.brandRow}>
         <View style={styles.brandIcon}><Ionicons name="water" size={22} color={theme.colors.background} /></View>
         <Text style={styles.brand}>WaterFlow</Text>
-        <View style={styles.phaseBadge}><Text style={styles.phaseText}>FASE 1</Text></View>
+        <View style={styles.phaseBadge}><Text style={styles.phaseText}>FASE 2</Text></View>
+      </View>
+
+      <View style={styles.accountRow}>
+        <Text style={styles.accountName}>Olá, {name}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Sair da conta" onPress={() => void handleLogout()}>
+          <Text style={styles.logout}>Sair</Text>
+        </Pressable>
       </View>
 
       <View style={styles.heading}>
@@ -43,7 +63,7 @@ export default function HomeScreen() {
       </View>
       <View style={styles.cards}>
         {previewUsers.map((user) => (
-          <UserCard key={user.id} name={user.name} initials={user.initials} accent={user.color} />
+          <UserCard key={user.id} name={user.id === 'you' ? name : user.name} initials={user.initials} accent={user.color} />
         ))}
       </View>
     </Screen>
@@ -56,6 +76,9 @@ const styles = StyleSheet.create({
   brand: { color: theme.colors.text, flex: 1, fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
   phaseBadge: { backgroundColor: theme.colors.primarySoft, borderRadius: theme.radius.pill, paddingHorizontal: 11, paddingVertical: 7 },
   phaseText: { color: theme.colors.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+  accountRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+  accountName: { color: theme.colors.text, fontSize: 15, fontWeight: '700' },
+  logout: { color: theme.colors.primary, fontSize: 14, fontWeight: '700', padding: 8 },
   heading: { marginTop: 38 },
   primaryButton: { alignItems: 'center', backgroundColor: theme.colors.primary, borderRadius: 22, flexDirection: 'row', gap: 10, justifyContent: 'center', minHeight: 64 },
   primaryButtonText: { color: theme.colors.background, fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
