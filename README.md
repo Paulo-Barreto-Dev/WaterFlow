@@ -52,10 +52,34 @@ O aplicativo não oferece recuperação de senha; o administrador gerencia as tr
 ## Verificações locais
 
 ```powershell
-npm run typecheck
-npm run doctor
-npx expo export --platform android
+npm.cmd run typecheck
+npm.cmd run doctor
+npx.cmd expo export --platform android
 ```
+
+## Android Emulator no Windows 10
+
+O SDK e o JDK locais ficam em `.local-tools/`. O AVD `WaterFlow_API_36` usa Pixel 7, Android 16 (API 36), Google APIs e x86_64. Em um PowerShell novo, se a política de execução impedir o script, abra uma sessão temporária com `powershell.exe -NoProfile -ExecutionPolicy Bypass`. Isso não altera a política permanente do Windows.
+
+```powershell
+. .\scripts\use-local-android.ps1
+emulator -avd WaterFlow_API_36
+```
+
+Em outro PowerShell, carregue o mesmo script e confirme `adb devices` e `adb -e shell getprop sys.boot_completed` (deve retornar `1`). Depois, compile e instale o development build:
+
+```powershell
+. .\scripts\use-local-android.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-android-emulator.ps1
+$env:NODE_OPTIONS = '--dns-result-order=ipv4first'
+$env:REACT_NATIVE_PACKAGER_HOSTNAME = '127.0.0.1'
+adb -e reverse tcp:8081 tcp:8081
+npx.cmd expo start --localhost --dev-client
+```
+
+O script de build copia temporariamente o projeto para `C:\w` (na unidade do sistema), compila apenas x86_64 usando o cache Gradle offline, salva o APK em `.local-tools/builds/waterflow-dev-x86_64.apk`, instala no emulador e remove a cópia. O caminho físico curto contorna a falha de caminhos longos do Ninja/CMake. Se `C:\w` já existir, o script para sem sobrescrever nada. Mapear o projeto com `subst` pode fazer o autolinking misturar caminhos de letras de unidade diferentes e quebrar o codegen. As variáveis do Metro forçam a escuta apenas em IPv4 local, necessária para o `adb reverse` neste Windows. No terminal do Expo, pressione `a` para abrir o app no emulador.
+
+As telas Início, Câmera e Galeria exigem uma conta Supabase autorizada. Sem credenciais, é possível validar o login e o redirecionamento de rotas protegidas, mas não o conteúdo dessas telas.
 
 ## Estrutura
 
